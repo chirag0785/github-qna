@@ -1,12 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-    webpack: (config) => {
-        config.externals = {
-          "onnxruntime-node": "commonjs onnxruntime-node",
-           sharp: "commonjs sharp",
-        };
-        return config;
-    },
-};
+const nextConfig = {};
 
 export default nextConfig;

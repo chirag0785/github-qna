@@ -5,11 +5,11 @@ import { db } from '../db';
 import { generateEmbedding } from '../ai/embedding';
 import { embeddings as embeddingsTable } from '@/lib/db/schema/embeddings';
 
-export const createResource = async (filePath: string, repoName: string, content: string) => {
+export const createResource = async (filePath: string, repoName: string, content: string,repoId:string) => {
   try {
     const [resource] = await db
       .insert(resources)
-      .values({ file_path: filePath, repo_name: repoName })
+      .values({ file_path: filePath, repo_name: repoName,repo_id:repoId })
       .returning();
     
     const generatedEmbeddings = await generateEmbedding(content);
