@@ -24,13 +24,13 @@ export async function generateEmbedding(text: string) {
     try {
         const embedder = await embedderPromise;
         const chunks = generateChunks(text, 512);
-
+        console.log("chunks",chunks);
         // Generate embeddings for each chunk
         const embeddings = await Promise.all(chunks.map(async (chunk) => {
             const embedding = await embedder(chunk, { pooling: "mean", normalize: true });
             return { embedding: embedding.data, content: chunk };
         }));
-
+        console.log("error nhi aaya");
         return embeddings;
     } catch (error) {
         console.error("Failed to generate embeddings:", error);

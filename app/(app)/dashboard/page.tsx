@@ -1,7 +1,13 @@
 "use client"
-import React from 'react'
+import { pollCommits } from '@/lib/actions/commit'
+import React, { useEffect } from 'react'
 
 const Page = () => {
+  useEffect(()=>{
+    pollCommits("jhz4zammf5ri7111ddqku","user_2vLZDw1KNC9ww8V52ZFOMSAl5RK").catch((err)=>{
+      console.log("Error: ",err);
+    })
+  },[])
   return (
     <div>
         Dashboard

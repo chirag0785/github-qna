@@ -13,6 +13,9 @@ export const repos=pgTable("repos",{
                     ()=> users.id,
                     { onDelete: 'cascade' }
                 ),
+    repo_url:varchar("repo_url").notNull(),
+    personal_access_token:varchar("personal_access_token"),
+    branch:varchar("branch").default("master"),
     createdAt: timestamp("created_at")
         .notNull()
         .default(sql`now()`),

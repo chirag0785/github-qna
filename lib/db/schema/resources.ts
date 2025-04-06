@@ -11,8 +11,9 @@ export const resources = pgTable("resources", {
   repo_id:varchar("repo_id",{length:191})
             .references(
                 ()=> repos.id,
-                { onDelete: 'cascade' }
+                { onDelete: 'cascade' },
             ),
+  content:varchar("content").notNull(),
   repo_name: varchar("repo_name", { length: 191 }).notNull(),
   file_path: varchar("file_path", { length: 191 }).notNull(),
   createdAt: timestamp("created_at")

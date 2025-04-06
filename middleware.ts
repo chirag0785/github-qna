@@ -1,33 +1,45 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+// import { authMiddleware } from '@clerk/nextjs/server'
 
-const isPublicRoute = createRouteMatcher([
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-]);
+import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export default clerkMiddleware(async (auth, request) => {
-  const url = new URL(request.url);
-  if (url.pathname.startsWith('/api')) {  //api ko nhi rokenge
-    return NextResponse.next();
-  }
+// import { NextResponse } from 'next/server';
 
-  const authObject=await auth();
-  if(authObject.userId && (isPublicRoute(request) || url.pathname==='/')){
-    //redirect it to dashboard
-    return NextResponse.redirect(new URL('/dashboard',request.url));
-  }
+// const isPublicRoute = createRouteMatcher([
+//   '/sign-in(.*)',
+//   '/sign-up(.*)',
+// ]);
 
-  if(!authObject.userId && (!isPublicRoute(request) && url.pathname!=='/')){
-    //redirect it to sign in
-    return NextResponse.redirect(new URL('/sign-in',request.url));
-  }
-  return NextResponse.next();
-});
+// export default clerkMiddleware(async (auth, request) => {
+//   const url = new URL(request.url);
+//   if (url.pathname.startsWith('/api')) {  //api ko nhi rokenge
+//     return NextResponse.next();
+//   }
 
+//   const authObject=await auth();
+//   if(authObject.userId && (isPublicRoute(request) || url.pathname==='/')){
+//     //redirect it to dashboard
+//     return NextResponse.redirect(new URL('/dashboard',request.url));
+//   }
+
+//   if(!authObject.userId && (!isPublicRoute(request) && url.pathname!=='/')){
+//     //redirect it to sign in
+//     return NextResponse.redirect(new URL('/sign-in',request.url));
+//   }
+//   return NextResponse.next();
+// });
+
+// export const config = {
+//   matcher: [
+//     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+//     '/(api|trpc)(.*)',
+//   ],
+// };
+
+export default clerkMiddleware();
 export const config = {
   matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
-  ],
+         '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+         '/(api|trpc)(.*)',
+       ],
 };
