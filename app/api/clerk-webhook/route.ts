@@ -1,6 +1,6 @@
 import { Webhook } from 'svix'
 import { headers } from 'next/headers'
-import { WebhookEvent } from '@clerk/nextjs/server'
+import { clerkClient, WebhookEvent } from '@clerk/nextjs/server'
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema/users';
 import { eq } from 'drizzle-orm';
@@ -78,6 +78,25 @@ export async function POST(req: Request) {
       await db.delete(users).where(eq(users.id,evt.data?.id || ""));
       console.log("User deleted from database");
       return new Response('Webhook received', { status: 200 })
+  }
+
+  if(evt.type==='session.created'){
+    //fetch the user from the database
+    const userList=await db.select().from(users).where(eq(users.id,evt.data?.user_id || "")).limit(1);
+    if(userList.length==0){
+        console.log("User doesn't exist in database");
+        return new Response('Webhook received', { status: 404 });
+    }
+    const user=userList[0];
+    await clerkClient.users.updateUserMetadata(evt.data?.user_id, {
+      publicMetadata:{
+        email: user?.email,
+        name: user?.name,
+        username: user?.username,
+        profile_img: user?.profile_img,
+        repos: user?.repos || [],
+      }
+    })
   }
   return new Response('Webhook received', { status: 200 })
 }
