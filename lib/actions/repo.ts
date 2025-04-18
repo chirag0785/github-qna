@@ -1,4 +1,17 @@
+import { GoogleGenAI } from "@google/genai";
 import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
+type Resource={
+    id:string;
+    repo_id:string;
+    content:string;
+    repo_name:string;
+    file_path:string;
+    createdAt:Date;
+    updatedAt:Date;
+}
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || "",
+})
 export const cloneRepo = async (repoUrl: string, repoName: string, personalAccessToken?: string, branch?: string) => {
     try {
         if (!repoUrl.startsWith("https://") && !repoUrl.startsWith("git@")) {
@@ -94,4 +107,58 @@ export const cloneRepo = async (repoUrl: string, repoName: string, personalAcces
 //     }
 // }
 
+export const getFileDescriptionsAndQueryResults=async (files:Resource[],query:string) => {
+    try{
+        const prompt = `
+You are a highly intelligent file analysis system.
 
+Your job is to process a set of source files and a user query. Each file is given to you in the form of its filename and full content, embedded inside triple backticks. The user query is also provided in backticks.
+
+You must return a single valid JSON object, where:
+- Each key is a filename (as a string).
+- Each value is an object with a single field: "description".
+- The description must start with a brief summary of what the file contains.
+- Then clearly explain how and why this file is relevant to the user query, based entirely on the file content.
+
+Do not make assumptions. Base your reasoning strictly on the content provided.
+Return ONLY a valid JSON object. Do NOT include explanations, comments, or code blocks.
+
+Query:
+\`\`\`
+${query}
+\`\`\`
+
+Files:
+${files.map(file => `Filename: \`${file.file_path}\`
+\`\`\`
+${file.content.slice(0,10000)}
+\`\`\``).join('\n\n')}
+
+Your response should follow this format:
+{
+  "filename1": {
+    "description": "Summary of the file. Then explain how and why it's related to the query."
+  },
+  "filename2": {
+    "description": "..."
+  }
+}
+`;
+
+        const response=await genAI.models.generateContent({
+            model:'gemini-1.5-flash',
+            contents:prompt
+        })
+
+        const responseText=(response?.text || "").replace(/```json|```/g, "").trim();
+        const result=JSON.parse(responseText || "{}");
+        return result;
+    }catch(err){
+        console.error("Error in the getFileDescriptionsAndQueryResults",err);
+        throw new Error(
+            err instanceof Error && err.message.length > 0
+                ? err.message
+                : "Error, please try again."
+        )
+    }
+}

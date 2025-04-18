@@ -1,4 +1,5 @@
 'use client';
+import ChatBox from '@/components/ChatBox';
 import { getCommitDetails } from '@/lib/actions/commit';
 import { useAuth } from '@clerk/nextjs';
 import { useSearchParams } from 'next/navigation';
@@ -59,6 +60,8 @@ const Page = ({ params }: { params: { repoId: string } }) => {
   }
 
   return (
+    <>
+    <ChatBox repoId={repoId}/>
     <div className="grid gap-6 mt-10 max-w-4xl mx-auto px-4">
       {commits.map((commit) => (
         <div
@@ -105,6 +108,7 @@ const Page = ({ params }: { params: { repoId: string } }) => {
         </div>
       ))}
     </div>
+    </>
   );
 };
 

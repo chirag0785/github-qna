@@ -1,18 +1,21 @@
 "use client"
 import { useUserStore } from '@/store/UserStore'
+import { useUser } from '@clerk/nextjs'
 import { MessageCircleQuestion, PlusCircle, Presentation } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
 const Page = () => {
   const user=useUserStore((state)=> state);
+  const {isSignedIn,isLoaded}=useUser();
   return (
     <div className="p-6 space-y-8">
     {/* Welcome Message */}
+
     <div className="text-3xl font-semibold text-gray-800 dark:text-gray-100">
       Welcome back, {user.name} 👋
     </div>
-
+    {isLoaded && isSignedIn && <div>Logged in hain app</div>}
     {/* Quick Actions */}
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <Link href="/ask-question">

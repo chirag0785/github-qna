@@ -1,3 +1,4 @@
+import { getFileDescriptionsAndQueryResults } from "@/lib/actions/repo";
 import { db } from "@/lib/db";
 import { repos } from "@/lib/db/schema/repos";
 import { GoogleGenAI } from "@google/genai";
@@ -86,10 +87,21 @@ export async function GET(request: NextRequest, { params }: { params: { repoId: 
                 success: false
             }, { status: 404 });
         }
+
+
+        const filesWithDescriptionsAndContent=await getFileDescriptionsAndQueryResults(resourceResults as any,query);
+
+        const finalResult=Object.keys(filesWithDescriptionsAndContent).map((filename,index)=>{
+            return {
+                name:filename,
+                description:filesWithDescriptionsAndContent[filename]["description"],
+                content:resourceResults[index].content
+            }
+        })
         return NextResponse.json({
             message: "Resources found",
             success: true,
-            data: resourceResults
+            data: finalResult
         }, { status: 200 });
     } catch (err: any) {
         console.error(err);
