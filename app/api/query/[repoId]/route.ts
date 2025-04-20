@@ -89,19 +89,19 @@ export async function GET(request: NextRequest, { params }: { params: { repoId: 
         }
 
 
-        const filesWithDescriptionsAndContent=await getFileDescriptionsAndQueryResults(resourceResults as any,query);
+        const answerToQuery=await getFileDescriptionsAndQueryResults(resourceResults as any,query);
 
-        const finalResult=Object.keys(filesWithDescriptionsAndContent).map((filename,index)=>{
+        const finalResult=resourceResults.map((file,index)=>{
             return {
-                name:filename,
-                description:filesWithDescriptionsAndContent[filename]["description"],
+                name: resourceResults[index].file_path,
                 content:resourceResults[index].content
             }
         })
         return NextResponse.json({
             message: "Resources found",
             success: true,
-            data: finalResult
+            data: finalResult,
+            answer: answerToQuery,
         }, { status: 200 });
     } catch (err: any) {
         console.error(err);

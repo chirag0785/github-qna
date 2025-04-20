@@ -107,58 +107,69 @@ export const cloneRepo = async (repoUrl: string, repoName: string, personalAcces
 //     }
 // }
 
-export const getFileDescriptionsAndQueryResults=async (files:Resource[],query:string) => {
-    try{
+export const getFileDescriptionsAndQueryResults = async (files: Resource[], query: string) => {
+    try {
+        // Constructing the prompt to be sent to the AI model
         const prompt = `
 You are a highly intelligent file analysis system.
 
-Your job is to process a set of source files and a user query. Each file is given to you in the form of its filename and full content, embedded inside triple backticks. The user query is also provided in backticks.
+Your task is to carefully read and analyze a set of source files and a user query. Each file is provided with its filename and full content inside triple backticks. The user query is also enclosed in backticks.
 
-You must return a single valid JSON object, where:
-- Each key is a filename (as a string).
-- Each value is an object with a single field: "description".
-- The description must start with a brief summary of what the file contains.
-- Then clearly explain how and why this file is relevant to the user query, based entirely on the file content.
+Your goal is to provide a thoughtful, well-reasoned answer to the query using only the information found in the file contents. Your answer should:
 
-Do not make assumptions. Base your reasoning strictly on the content provided.
-Return ONLY a valid JSON object. Do NOT include explanations, comments, or code blocks.
+1. Start by directly answering the user's query in a clear and precise manner.
+2. Use insights strictly from the file contents. Do **not** make assumptions or rely on external knowledge.
+3. Refer to the files that are relevant to your answer. Briefly summarize what each file contains and how it helps address the query.
+4. Include specific code snippets (or parts of them) from the files that are directly relevant to answering the query. 
+5. If you use any code, explain clearly which parts you are referencing and why they are important.
+6. Ensure that your entire explanation is written in natural language that flows well, demonstrating a deep understanding of the content.
 
-Query:
+### Please return your answer **formatted as Markdown**:
+
+- **Do not** return plain text, JSON, code blocks, or bullet points.
+- Ensure proper headings, indentation, and clarity for easy readability in a Markdown editor.
+- Be mindful of visual hierarchy and use appropriate Markdown formatting like **bold**, *italic*, and \`code\` where needed.
+
+---
+
+**Query:**
+
 \`\`\`
 ${query}
 \`\`\`
 
-Files:
-${files.map(file => `Filename: \`${file.file_path}\`
-\`\`\`
-${file.content.slice(0,10000)}
-\`\`\``).join('\n\n')}
+---
 
-Your response should follow this format:
-{
-  "filename1": {
-    "description": "Summary of the file. Then explain how and why it's related to the query."
-  },
-  "filename2": {
-    "description": "..."
-  }
-}
+**Files:**
+
+${files.map(file => `
+### Filename: \`${file.file_path}\`
+
+\`\`\`txt
+${file.content.slice(0, 10000)}\`\`\`
+`).join('\n')}
+
 `;
 
-        const response=await genAI.models.generateContent({
-            model:'gemini-1.5-flash',
-            contents:prompt
-        })
+        // Sending the prompt to the AI model for content generation
+        const response = await genAI.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: prompt
+        });
 
-        const responseText=(response?.text || "").replace(/```json|```/g, "").trim();
-        const result=JSON.parse(responseText || "{}");
-        return result;
-    }catch(err){
-        console.error("Error in the getFileDescriptionsAndQueryResults",err);
+        // Processing and cleaning the response
+        const responseText = (response?.text || "").replace(/```json|```/g, "").trim();
+        
+        // Returning the formatted response
+        return responseText;
+    } catch (err) {
+        console.error("Error in getFileDescriptionsAndQueryResults:", err);
+        
+        // Throwing a more informative error message
         throw new Error(
             err instanceof Error && err.message.length > 0
                 ? err.message
-                : "Error, please try again."
-        )
+                : "An error occurred, please try again."
+        );
     }
-}
+};

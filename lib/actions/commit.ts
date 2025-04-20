@@ -247,6 +247,7 @@ export const getCommitDetails = async (page: number, repoId: string, userId: str
                     avatar_url: commit?.avatar_url || '',
                 }
             }),
+            totalPages: Math.ceil(commits.length / 10),
         }
     } catch (err) {
         console.log("Error in getCommitDetails", err);
