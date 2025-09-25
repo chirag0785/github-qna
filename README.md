@@ -51,6 +51,7 @@ GLADIA_API_KEY=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+```
 
 ## 📦 Installation
 
@@ -59,15 +60,17 @@ STRIPE_WEBHOOK_SECRET=
 ```bash
 git clone https://github.com/chirag0785/github-qna.git
 cd github-qna
+```
 
 ### Install dependencies
 ```bash
 npm install
+```
 
 ### Run the development server
 ```bash
 npm run dev
-
+```
 
 ## 🔍 How It Works
 
