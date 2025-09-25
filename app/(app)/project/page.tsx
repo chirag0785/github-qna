@@ -94,32 +94,8 @@ const Page = () => {
   const pageNo = Number(searchParams.get("page")) || 1;
   const router = useRouter();
   const pathname = usePathname();
-  if (!repoId) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <div className="relative flex items-center justify-center mb-6">
-          <div className="absolute w-24 h-24 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-full blur-2xl opacity-60 animate-pulse"></div>
-          <div className="relative bg-white dark:bg-slate-900 p-4 rounded-full shadow-lg flex items-center justify-center">
-            <FileCode
-              size={36}
-              className="text-indigo-600 dark:text-indigo-400"
-            />
-          </div>
-        </div>
-
-        <h2 className="text-3xl font-extrabold text-slate-800 dark:text-white mb-2">
-          No Repository Selected
-        </h2>
-
-        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-lg">
-          Please select a repository to view its commits and use the chat
-          assistant.
-        </p>
-      </div>
-    );
-  }
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !repoId) return;
 
     setLoading(true);
     getCommitDetails(pageNo, repoId, userId)
@@ -159,6 +135,31 @@ const Page = () => {
     params.set("page", page.toString());
     router.replace(`${pathname}?${params.toString()}`);
   };
+
+  if (!repoId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <div className="relative flex items-center justify-center mb-6">
+          <div className="absolute w-24 h-24 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-full blur-2xl opacity-60 animate-pulse"></div>
+          <div className="relative bg-white dark:bg-slate-900 p-4 rounded-full shadow-lg flex items-center justify-center">
+            <FileCode
+              size={36}
+              className="text-indigo-600 dark:text-indigo-400"
+            />
+          </div>
+        </div>
+
+        <h2 className="text-3xl font-extrabold text-slate-800 dark:text-white mb-2">
+          No Repository Selected
+        </h2>
+
+        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-lg">
+          Please select a repository to view its commits and use the chat
+          assistant.
+        </p>
+      </div>
+    );
+  }
 
   if (!userId) {
     return (

@@ -80,7 +80,7 @@ const Page = () => {
               {greeting}, {user.name} 👋
             </h1>
             <p className="mt-2 text-slate-600 dark:text-slate-400">
-              Here's what's happening with your repositories today.
+              {`Here's what's happening with your repositories today.`}
             </p>
           </div>
           <div className="flex gap-2">
@@ -214,7 +214,7 @@ const Page = () => {
                   You have no projects yet
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md">
-                  Connect your first GitHub repository to start exploring with RepoMind's intelligent assistance.
+                  {`Connect your first GitHub repository to start exploring with RepoMind's intelligent assistance.`}
                 </p>
                 <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
                   <Link href="/project/new">
