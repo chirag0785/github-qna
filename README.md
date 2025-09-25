@@ -1,14 +1,53 @@
-# Vercel AI SDK RAG Guide Starter Project
+# GitHub QnA
 
-This is the starter project for the Vercel AI SDK [Retrieval-Augmented Generation (RAG) guide](https://sdk.vercel.ai/docs/guides/rag-chatbot).
+GitHub QnA is an AI-powered question-answering tool for code repositories.  
+It allows developers to query a repository in natural language and get contextual answers along with relevant code snippets.  
+This project uses semantic search and embeddings to deliver precise results.
 
-In this project, you will build a chatbot that will only respond with information that it has within its knowledge base. The chatbot will be able to both store and retrieve information. This project has many interesting use cases from customer support through to building your own second brain!
+---
 
-This project will use the following stack:
+## 🚀 Features
 
-- [Next.js](https://nextjs.org) 14 (App Router)
-- [Vercel AI SDK](https://sdk.vercel.ai/docs)
-- [OpenAI](https://openai.com)
-- [Drizzle ORM](https://orm.drizzle.team)
-- [Postgres](https://www.postgresql.org/) with [ pgvector ](https://github.com/pgvector/pgvector)
-- [shadcn-ui](https://ui.shadcn.com) and [TailwindCSS](https://tailwindcss.com) for styling
+- **Natural Language Queries** — Ask questions about your code in plain English.  
+- **Semantic Search** — Uses vector embeddings to find the most relevant results.  
+- **Repository Integration** — Works directly with GitHub repositories.  
+- **Contextual Answers** — Combines embeddings with file contents to generate AI-powered answers.  
+- **Efficient Search** — Filters results by similarity score for relevance.
+
+---
+
+## 🛠 Tech Stack
+
+- **Next.js** — Frontend framework  
+- **Drizzle ORM** — Database abstraction  
+- **pgvector** — Vector search in PostgreSQL  
+- **Google Gemini API (GenAI)** — Embedding generation and AI responses  
+- **Clerk** — Authentication  
+- **Stripe** — Payment processing  
+- **Vercel** — Deployment  
+
+---
+
+## ⚙️ Setup
+
+### Prerequisites
+
+Create a `.env` file in the root of your project with the following variables:
+
+```env
+DATABASE_URL=
+OPENAI_API_KEY=
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=
+SIGNING_SECRET=
+GITHUB_ACCESS_TOKEN=
+GEMINI_API_KEY=
+NEXT_PUBLIC_BASE_URL=
+GLADIA_API_KEY=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
