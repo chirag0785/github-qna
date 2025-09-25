@@ -93,7 +93,7 @@ const Page = () => {
             <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
               <Link href="/project/new">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                New Project
+                <span>Create New Project</span>
               </Link>
             </Button>
           </div>
@@ -227,7 +227,7 @@ const Page = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {user.repos.map((repo) => (
-                <Link key={repo.id} href={`/project/${repo.id}`}>
+                <Link key={repo.id} href={`/project?repoId=${repo.id}`}>
                   <Card className="h-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200 hover:border-indigo-300 dark:hover:border-indigo-700">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">

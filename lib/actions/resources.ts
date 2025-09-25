@@ -9,11 +9,7 @@ const genAI = new GoogleGenAI({
 })
 export const createResource = async (files: { content: string, filePath: string }[], repoName: string, repoId: string) => {
   try {
-    for (const file of files) {
-      if (!file.content || !file.filePath) {
-        throw new Error('File content or file path is missing');
-      }
-    }
+    files=files.filter(file=> file.content && file.filePath);
     //insert files into resources table
     await db.insert(resources).values(files.map((file) => {
       return {
