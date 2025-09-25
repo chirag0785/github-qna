@@ -51,3 +51,32 @@ GLADIA_API_KEY=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+
+## 📦 Installation
+
+### Clone the repository:
+
+```bash
+git clone https://github.com/chirag0785/github-qna.git
+cd github-qna
+
+### Install dependencies
+```bash
+npm install
+
+### Run the development server
+```bash
+npm run dev
+
+
+## 🔍 How It Works
+
+1. **Embedding Generation**  
+   When a query is submitted, GitHub QnA uses Google GenAI's `text-embedding-004` model to convert the query into a numerical vector.
+
+2. **Vector Search**  
+   This vector is compared against stored embeddings in PostgreSQL (via `pgvector`) to find the most similar files.
+
+3. **Answer Generation**  
+   The system retrieves the relevant file contents and uses AI to generate a contextual answer to the query.
+
