@@ -23,9 +23,8 @@ const Page = () => {
   const { isSignedIn, isLoaded } = useUser();
   const [greeting, setGreeting] = useState('');
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    if (isSignedIn && isLoaded) {
+    if (isSignedIn && isLoaded) {   //it means user is signed in and clerk is loaded
       user.getUser();
     }
     

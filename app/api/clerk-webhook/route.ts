@@ -47,9 +47,6 @@ export async function POST(req: Request) {
     })
   }
 
-
-  const { id } = evt.data
-  const eventType = evt.type
   if(evt.type==='user.created'){        //sync with the user database
       //check if user already exists
       const userList=await db.select().from(users).where(eq(users.email,evt.data?.email_addresses?.[0]?.email_address)).limit(1);
@@ -58,7 +55,7 @@ export async function POST(req: Request) {
           return new Response('Webhook received', { status: 200 });
       }
       await db.insert(users).values({
-        id: evt.data?.id || nanoid(),  // Use nanoid if ID is missing
+        id: evt.data?.id || nanoid(),
         name: `${evt.data?.first_name || ""} ${evt.data?.last_name || ""}`.trim(),
         email: evt.data?.email_addresses?.[0]?.email_address || "",
         username: evt.data?.username || "",
@@ -88,7 +85,7 @@ export async function POST(req: Request) {
         return new Response('Webhook received', { status: 404 });
     }
     const user=userList[0];
-    await clerkClient.users.updateUserMetadata(evt.data?.user_id, {
+    await clerkClient().users.updateUserMetadata(evt.data?.user_id, {
       publicMetadata:{
         email: user?.email,
         name: user?.name,

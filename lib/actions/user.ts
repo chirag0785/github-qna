@@ -1,6 +1,6 @@
 'use server'
 
-import { auth } from "@clerk/nextjs/server"
+import { auth, clerkClient } from "@clerk/nextjs/server"
 import { db } from "../db";
 import { users } from "../db/schema/users";
 import { eq } from "drizzle-orm";
@@ -14,7 +14,20 @@ export const fetchUser=async ()=>{
         }
         const userDetails=await db.select().from(users).where(eq(users.id,userId));
         if(userDetails.length===0){
-            throw new Error("User not found");
+            //this means user not found so now for second step of verification we will check 
+            //if user exists in clerk
+            const clerkUser=await clerkClient().users.getUser(userId);
+            if(!clerkUser){
+                throw new Error("User not found");
+            }
+            return {
+                id:clerkUser.id,
+                username: clerkUser.username || "",
+                name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+                email: clerkUser.emailAddresses?.[0]?.emailAddress || "",
+                profileImg: clerkUser.imageUrl || "",
+                repos: []
+            }
         }
         const user=userDetails[0];
         const repoDetails=[] as Repo[];
