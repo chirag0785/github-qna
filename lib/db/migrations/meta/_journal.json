@@ -15,6 +15,20 @@
       "when": 1740146840033,
       "tag": "0001_deep_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759054210394,
+      "tag": "0002_third_robbie_robertson",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1759055962225,
+      "tag": "0003_free_gargoyle",
+      "breakpoints": true
     }
   ]
 }

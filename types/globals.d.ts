@@ -6,5 +6,6 @@ declare global{
         email: string | null;
         username: string | null;
         repos: string[] | null;
+        firstTimeUser?: boolean | null;
     }
 }

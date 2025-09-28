@@ -16,6 +16,7 @@ export const fetchUser=async ()=>{
         if(userDetails.length===0){
             //this means user not found so now for second step of verification we will check 
             //if user exists in clerk
+            //set in the metadata that first time user is there
             const clerkUser=await clerkClient().users.getUser(userId);
             if(!clerkUser){
                 throw new Error("User not found");
@@ -54,5 +55,27 @@ export const fetchUser=async ()=>{
     }catch(err:any){
         console.error(err);
         throw new Error(err.message || "Error fetching user details");
+    }
+}
+
+export const updateFirstTimeUserFlag=async ()=>{
+    try{
+        const {userId}=auth();
+        if(!userId){
+            throw new Error("User not authenticated");
+        }
+        const clerkUser=await clerkClient().users.getUser(userId);
+        if(!clerkUser){
+            throw new Error("User not found");
+        }
+        await clerkClient().users.updateUserMetadata(clerkUser.id,{
+            publicMetadata: {
+                ...clerkUser.publicMetadata,
+                firstTimeUser: false,
+            }
+        })
+    }catch(err:any){
+        console.error(err);
+        throw new Error(err.message || "Error updating user details");
     }
 }
