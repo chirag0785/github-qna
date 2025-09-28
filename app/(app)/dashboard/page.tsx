@@ -151,7 +151,7 @@ const Page = () => {
                 Welcome back, {user.name} 
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed">
-                Here's what's happening with your repositories today.
+                {`Here's what's happening with your repositories today.`}
               </p>
             </div>
             <div className="flex gap-3">
@@ -292,7 +292,7 @@ const Page = () => {
                     No projects yet
                   </h3>
                   <p className="text-gray-600 mb-8 max-w-md leading-relaxed">
-                    Connect your first GitHub repository to start exploring with RepoMind's intelligent assistance.
+                    {`Connect your first GitHub repository to start exploring with RepoMind's intelligent assistance.`}
                   </p>
                   <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 flex items-center gap-3">
                     <PlusCircle className="h-5 w-5" />

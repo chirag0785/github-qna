@@ -126,7 +126,7 @@ const BillingPage = () => {
                     <span className="text-gray-700 font-medium">Pro Tip</span>
                   </div>
                   <p className="text-gray-600 text-sm">
-                    Credits roll over monthly, so you never lose what you don't use!
+                   {`Credits roll over monthly, so you never lose what you don't use!`}
                   </p>
                 </div>
               </div>
