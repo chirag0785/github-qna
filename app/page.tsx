@@ -221,7 +221,7 @@ const GitHubQnALanding = () => {
                     key={index}
                     className="p-3 bg-white/5 rounded-lg text-left text-gray-300 hover:bg-white/10 transition-colors cursor-pointer"
                   >
-                    "{query}"
+                    {`"${query}"`}
                   </div>
                 ))}
               </CardContent>
@@ -328,7 +328,7 @@ const GitHubQnALanding = () => {
               How It Works
             </h2>
             <p className="text-xl text-gray-300">
-              Three simple steps to unlock your code's potential
+              {`Three simple steps to unlock your code's potential`}
             </p>
           </div>
 
