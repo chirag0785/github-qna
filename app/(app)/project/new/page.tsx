@@ -20,9 +20,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { useUserStore } from "@/store/UserStore";
 
 const Page = () => {
   const [uploadingRepo, setUploadingRepo] = useState(false);
+  const user=useUserStore();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof repoAddSchema>>({
@@ -36,6 +38,11 @@ const Page = () => {
   });
 
   const onSubmit = async (data: z.infer<typeof repoAddSchema>) => {
+    if(user.credits<50){
+      toast.error("Not enough credits. Please purchase more credits to add a new repository.");
+      form.reset();
+      return;
+    }
     setUploadingRepo(true);
     try {
       const response = await axios.post(
@@ -43,6 +50,11 @@ const Page = () => {
         data
       );
       toast.success("Repository added successfully");
+      user.updateUser({
+        ...user,
+        credits: user.credits - 50,
+        repos: [...user.repos, {id:response.data.repoId,name:data.repoName,repo_url:data.repoUrl}]
+      })
       router.replace(`/project?repoId=${response.data.repoId}`);
     } catch (err: any) {
       console.error(err);

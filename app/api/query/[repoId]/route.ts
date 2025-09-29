@@ -1,6 +1,8 @@
 import { getFileDescriptionsAndQueryResults } from "@/lib/actions/repo";
 import { db } from "@/lib/db";
 import { repos } from "@/lib/db/schema/repos";
+import { users } from "@/lib/db/schema/users";
+import { auth } from "@clerk/nextjs/server";
 import { GoogleGenAI } from "@google/genai";
 import { eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -13,6 +15,27 @@ export async function GET(
 ) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("query") as string;
+  const {userId}=auth();
+  if(!userId){
+    return NextResponse.json({
+      message:"Unauthorized",
+      success:false
+    },{status:401});
+  }
+  const userList=await db.select().from(users).where(eq(users.id,userId)).limit(1);
+  if(userList.length==0){
+    return NextResponse.json({
+      message:"User not found",
+      success:false
+    },{status:404});
+  }
+  const user=userList[0];
+  if(!user.credits || user.credits<5){
+    return NextResponse.json({
+      message:"Not enough credits. Please purchase more credits to ask queries.",
+      success:false
+    },{status:403});
+  }
 
   const repoId = params.repoId;
   if (!query || !repoId) {
@@ -108,9 +131,9 @@ export async function GET(
     const resourceResults = await db.execute(
       sql`SELECT * FROM "resources"
                 WHERE "id" = ANY(ARRAY[${sql.join(
-                  resourceIds.map((id) => sql`${id}`),
-                  sql`,`
-                )}]) 
+        resourceIds.map((id) => sql`${id}`),
+        sql`,`
+      )}]) 
                 AND "repo_id" = ${repoId}`
     );
 
@@ -135,6 +158,9 @@ export async function GET(
         content: resourceResults[index].content,
       };
     });
+
+    //decrement the credit required for it
+    await db.update(users).set({credits:sql`${users.credits} - 5`}).where(eq(users.id,userId));
     return NextResponse.json(
       {
         message: "Resources found",

@@ -14,6 +14,7 @@ import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
 import { Send, FileText, Code, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useUserStore } from "@/store/UserStore";
 
 const ChatBox = ({ repoId }: { repoId: string }) => {
   const [query, setQuery] = useState<string>("");
@@ -25,10 +26,16 @@ const ChatBox = ({ repoId }: { repoId: string }) => {
   const [loading, setLoading] = useState(false);
   const [typewriterIndex, setTypewriterIndex] = useState(0);
   const [typewriterEnabled, setTypewriterEnabled] = useState(true);
+  const user=useUserStore();
 
   const processQuery = async () => {
     if (!query.trim()) return;
     
+    if(user.credits<5){
+      toast.error("Not enough credits. Please purchase more credits to ask queries.");
+      setQuery("");
+      return;
+    }
     setLoading(true);
     try {
       const response = await axios.get(
@@ -42,6 +49,10 @@ const ChatBox = ({ repoId }: { repoId: string }) => {
       
       // Set the full answer
       setAnswer(result.answer || "");
+      user.updateUser({
+        ...user,
+        credits: user.credits - 5
+      })
       
       // Reset typewriter effect
       setDisplayedAnswer("");

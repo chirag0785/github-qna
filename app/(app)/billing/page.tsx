@@ -6,12 +6,16 @@ import { useUser } from "@clerk/nextjs";
 import { ArrowRight, Check, CreditCard, GitBranch, Shield, Sparkles, Star, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import axios from "axios";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 const perCreditCost=0.05;   // 5 cent per credit
 const BillingPage = () => {
   const [credits, setCredits] = useState(50);
   const [isHovered, setIsHovered] = useState(false);
   const user=useUserStore();
   const {isSignedIn,isLoaded}=useUser();
+  const router=useRouter();
   const calculateAmountToPay = (credits:number)=>{
     return credits * perCreditCost;
   }
@@ -26,6 +30,19 @@ const BillingPage = () => {
       user.getUser();
     }
   },[isLoaded,isSignedIn])
+  const handlePayment= async()=>{
+    try{
+      const response= await axios.post('/api/checkout_sessions',{
+        credits
+      })
+      if(response.data.url){
+        router.replace(response.data.url);
+      }
+    }catch(err){
+      console.error("Error creating checkout session:", err);
+      toast.error("Failed to initiate payment. Please try again.");
+    }
+  };
 
   if (!isLoaded || !user || user.id === "") {
     return (
@@ -87,9 +104,21 @@ const BillingPage = () => {
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-full px-6 py-3 mb-6 shadow-lg">
+           <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-full px-6 py-3 mb-6 shadow-lg">
             <Sparkles className="text-amber-500" size={20} />
             <span className="text-gray-700 font-medium">Welcome back, {user.name}</span>
+          </div>
+          
+          <div className="inline-flex items-center gap-4 bg-gradient-to-r from-emerald-100 to-teal-100 backdrop-blur-lg border border-emerald-200 rounded-2xl px-8 py-4 mb-6 shadow-lg">
+            <div className="flex items-center justify-center w-12 h-12 bg-white rounded-xl shadow-md">
+              <Zap className="text-emerald-500" size={24} />
+            </div>
+            <div className="text-left">
+              <div className="text-sm text-gray-600 font-medium">Available Credits</div>
+              <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                {user.credits}
+              </div>
+            </div>
           </div>
           
           <h1 className="text-6xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
@@ -231,7 +260,7 @@ const BillingPage = () => {
               {/* Action Button */}
               <Button 
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-6 rounded-2xl text-lg font-semibold shadow-xl transform hover:scale-105 transition-all duration-300 border-0"
-                onClick={() => console.log('Proceeding to payment...')}
+                onClick={() => handlePayment()}
               >
                 <div className="flex items-center justify-center gap-3">
                   <CreditCard size={20} />

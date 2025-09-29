@@ -12,6 +12,7 @@ export type User={
     username:string,
     profile_img:string,
     repos:Repo[],
+    credits:number
 }
 type UserStore = User & {
     getUser: () => void
@@ -27,6 +28,7 @@ export const useUserStore=create<UserStore>(
             username:"",
             profile_img:"",
             repos:[],
+            credits: 0,
             getUser:()=>{
                 fetchUser().then((user)=>{
                     set({
@@ -35,7 +37,8 @@ export const useUserStore=create<UserStore>(
                         email:user.email,
                         username:user.username,
                         profile_img:user.profileImg || "",
-                        repos:user.repos
+                        repos:user.repos,
+                        credits: user.credits || 0
                     })
                 }).catch((err)=>{
                     console.log(err);
@@ -45,7 +48,8 @@ export const useUserStore=create<UserStore>(
                         email:"",
                         username:"",
                         profile_img:"",
-                        repos:[]
+                        repos:[],
+                        credits: 0
                     })
                 })
             },
@@ -56,7 +60,8 @@ export const useUserStore=create<UserStore>(
                     email:user.email,
                     username:user.username,
                     profile_img:user.profile_img,
-                    repos:user.repos
+                    repos:user.repos,
+                    credits: user.credits || 0
                 })
             },
             deleteUser:()=>{
@@ -66,7 +71,8 @@ export const useUserStore=create<UserStore>(
                     email:"",
                     username:"",
                     profile_img:"",
-                    repos:[]
+                    repos:[],
+                    credits: 0
                 })
             }
         }),

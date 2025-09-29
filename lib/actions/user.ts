@@ -27,8 +27,9 @@ export const fetchUser=async ()=>{
                 name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
                 email: clerkUser.emailAddresses?.[0]?.emailAddress || "",
                 profileImg: clerkUser.imageUrl || "",
-                repos: []
-            }
+                repos: [],
+                credits: 100,       //giving 100 free credits to new user
+            }   
         }
         const user=userDetails[0];
         const repoDetails=[] as Repo[];
@@ -50,7 +51,8 @@ export const fetchUser=async ()=>{
             username:user.username,
             email:user.email,
             profileImg:user.profile_img,
-            repos:repoDetails
+            repos:repoDetails,
+            credits: user.credits
         }
     }catch(err:any){
         console.error(err);
@@ -77,5 +79,23 @@ export const updateFirstTimeUserFlag=async ()=>{
     }catch(err:any){
         console.error(err);
         throw new Error(err.message || "Error updating user details");
+    }
+}
+
+export const addCreditsToUser=async (userId:string,creditsToAdd:number)=>{
+    try{
+        if(!userId){
+            throw new Error("User not authenticated");
+        }
+        const userDetails=await db.select().from(users).where(eq(users.id,userId));
+        if(userDetails.length===0){
+            throw new Error("User not found");
+        }
+        const user=userDetails[0];
+        const newCredits=(user.credits || 0) + creditsToAdd;
+        await db.update(users).set({credits:newCredits}).where(eq(users.id,userId));
+    }catch(err:any){
+        console.error(err);
+        throw new Error(err.message || "Error adding credits to user");
     }
 }
