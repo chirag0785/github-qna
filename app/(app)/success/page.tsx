@@ -61,7 +61,7 @@ export default async function Success({searchParams}: {searchParams: {session_id
 
             {/* Benefits List */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 space-y-3">
-              <p className="text-gray-700 font-medium">What's next?</p>
+              <p className="text-gray-700 font-medium">{`What's next?`}</p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-3 text-gray-600">
                   <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
