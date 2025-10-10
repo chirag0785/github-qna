@@ -29,7 +29,7 @@ const BillingPage = () => {
     if(isLoaded && isSignedIn){
       user.getUser();
     }
-  },[isLoaded,isSignedIn])
+  },[isLoaded,isSignedIn,user])
   const handlePayment= async()=>{
     try{
       const response= await axios.post('/api/checkout_sessions',{

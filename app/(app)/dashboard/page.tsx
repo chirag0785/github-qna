@@ -144,7 +144,7 @@ const Page = () => {
 
     // Simulate loading state
     setTimeout(() => setLoading(false), 500);
-  }, [isSignedIn, isLoaded, clerkUser]);
+  }, [isSignedIn, isLoaded, clerkUser,user]);
 
   useEffect(() => {
     if (!user.id || !project.id || user.id.length==0 || project.id.length==0) return;
@@ -272,7 +272,7 @@ const Page = () => {
         {commits && commits.length > 0 ? (
           <div className="space-y-6">
             {commits.map((commit) => (
-              <Commit commit={commit}/>
+              <Commit key={commit.id} commit={commit}/>
             ))}
 
             {/* Pagination */}
