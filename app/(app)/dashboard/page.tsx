@@ -1,42 +1,104 @@
 "use client";
 import { useUserStore } from "@/store/UserStore";
 import { useUser } from "@clerk/nextjs";
+import type { CommitType } from "@/lib/types";
 import {
-  MessageCircleQuestion,
-  PlusCircle,
-  Presentation,
-  Code,
-  GitBranch,
-  BarChart3,
-  Clock,
-  Activity,
-  FolderGit2,
-  ArrowRight,
   Sparkles,
-  TrendingUp,
-  Calendar,
-  Star,
-  Zap,
+  FileCode,
+  GitCommit,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { toast, ToastT } from "sonner";
+import { toast } from "sonner";
 import { updateFirstTimeUserFlag } from "@/lib/actions/user";
+import { useProjectStore } from "@/store/ProjectStore";
+import NoProjectSelected from "@/components/NoProjectSelected";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import ChatBox from "@/components/ChatBox";
+import { Button } from "@/components/ui/button";
+import { getCommitDetails } from "@/lib/actions/commit";
+import { Skeleton } from "@/components/ui/skeleton";
+import NotSigned from "@/components/NotSigned";
+import Loading from "@/components/Loading";
+import Commit from "@/components/Commit";
+const ProjectPageSkeleton = () => {
+  return (
+    <div className="mb-8">
+      <header className="mb-10">
+        <div className="flex items-center mb-2">
+          <Skeleton className="w-6 h-6 rounded mr-2" />
+          <Skeleton className="h-8 w-48 rounded" />
+        </div>
+        <Skeleton className="h-4 w-64 rounded" />
+      </header>
+
+      <div className="mb-12 rounded-2xl">
+        <Skeleton className="h-48 w-full rounded-2xl" />
+      </div>
+
+      <div className="space-y-6">
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white dark:bg-slate-800 shadow-lg rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700"
+          >
+            <div className="border-l-4 border-indigo-600 dark:border-indigo-500 p-6">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                <div className="flex-1">
+                  <Skeleton className="h-6 w-3/4 mb-2 rounded" />
+                  <div className="flex items-center mt-4 mb-4">
+                    <div className="flex items-center mr-6">
+                      <Skeleton className="w-8 h-8 rounded-full mr-2" />
+                      <Skeleton className="h-4 w-24 rounded" />
+                    </div>
+                    <Skeleton className="h-4 w-20 rounded" />
+                  </div>
+                </div>
+                <Skeleton className="h-5 w-16 rounded" />
+              </div>
+              <div className="mt-2 pt-4 border-t border-slate-100 dark:border-slate-700">
+                <Skeleton className="h-4 w-full mb-2 rounded" />
+                <Skeleton className="h-4 w-5/6 rounded" />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <div className="flex justify-center mt-8">
+          <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-1">
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-6 w-24 rounded" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Page = () => {
   const user = useUserStore((state) => state);
   const { isSignedIn, isLoaded, user: clerkUser } = useUser();
   const [greeting, setGreeting] = useState("");
   const [loading, setLoading] = useState(true);
+  const project=useProjectStore();
+
+  const [commits, setCommits] = useState<CommitType[]>();
+  const [error, setError] = useState<string>();
+  const [totalPages, setTotalPages] = useState(1);
+  const searchParams = useSearchParams();
+  const pageNo = Number(searchParams.get("page")) || 1;
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Handle page navigation
+  const navigateToPage = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", page.toString());
+    router.replace(`${pathname}?${params.toString()}`);
+  };
   useEffect(() => {
     if (isSignedIn && isLoaded) {
       //it means user is signed in and clerk is loaded
@@ -84,47 +146,58 @@ const Page = () => {
     setTimeout(() => setLoading(false), 500);
   }, [isSignedIn, isLoaded, clerkUser]);
 
+  useEffect(() => {
+    if (!user.id || !project.id || user.id.length==0 || project.id.length==0) return;
+
+    setLoading(true);
+    getCommitDetails(pageNo, project.id, user.id)
+      .then((response: any) => {
+        setCommits(response.data);
+        // Assuming the API returns total pages info - adjust as needed
+        setTotalPages(response.totalPages || 1);
+      })
+      .catch((err) => {
+        console.error("Error fetching commits:", err);
+        setError(err.message);
+        toast.error("Failed to fetch commits. Please try again.", {
+          description: err.message,
+          icon: <AlertTriangle className="w-5 h-5 text-red-500" />,
+        });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [pageNo, project,user]);
+
+  
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-300 to-purple-300 rounded-full blur-xl opacity-30 animate-pulse"></div>
-          <div className="relative bg-white/80 backdrop-blur-lg border border-gray-200 rounded-2xl p-8 flex flex-col items-center shadow-xl">
-            <div className="h-16 w-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mb-4 animate-spin"></div>
-            <div className="h-4 w-32 bg-gray-200 rounded-full mb-2 animate-pulse"></div>
-            <div className="h-3 w-24 bg-gray-100 rounded-full animate-pulse"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return <Loading/>
   }
 
   if (!isSignedIn) {
+    return <NotSigned/>
+  }
+  if(!project.id || project.id.length==0){
+    //select a project or create a new project to continue
+     return <NoProjectSelected/>
+  }
+
+  if (loading) {
+    return <ProjectPageSkeleton />;
+  }
+
+  if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center px-4">
-        <div className="max-w-2xl text-center">
-          <div className="relative mb-8 group">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-300 to-purple-300 rounded-3xl blur-xl opacity-40 group-hover:opacity-60 transition-all duration-500 animate-pulse"></div>
-            <div className="relative bg-white/80 backdrop-blur-lg border border-gray-200 rounded-3xl p-6 shadow-xl">
-              <GitBranch size={64} className="text-gray-600 mx-auto mb-4" />
-            </div>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+        <div className="bg-gradient-to-r from-red-500 to-pink-600 p-1 rounded-full mb-6">
+          <div className="bg-white dark:bg-slate-900 p-3 rounded-full">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
           </div>
-          
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-            Welcome to RepoMind
-          </h1>
-          <p className="text-xl text-gray-600 mb-12 leading-relaxed">
-            Your intelligent repository assistant. Sign in to access your
-            projects, ask questions about your code, and manage your repositories.
-          </p>
-          
-          <button
-            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-12 py-6 rounded-2xl text-lg font-semibold shadow-xl transform hover:scale-105 transition-all duration-300 border-0 flex items-center gap-3 mx-auto"
-          >
-            Sign In to Continue
-            <ArrowRight size={20} />
-          </button>
         </div>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
+          Error fetching the commits, refresh the page.
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 max-w-md">{error}</p>
       </div>
     );
   }
@@ -154,320 +227,96 @@ const Page = () => {
                 {`Here's what's happening with your repositories today.`}
               </p>
             </div>
-            <div className="flex gap-3">
-              <button className="border-gray-300 bg-white/80 backdrop-blur-lg hover:bg-white/90 text-gray-700 px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border flex items-center gap-2">
-                View All Projects
-                <ArrowRight className="h-4 w-4" />
-              </button>
-              <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-0 flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
-                Create New Project
-              </button>
-            </div>
-          </div>
-
-          {/* Stats overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">
-                    Total Projects
-                  </p>
-                  <h3 className="text-3xl font-bold text-gray-800">
-                    {user.repos.length}
-                  </h3>
-                  <div className="flex items-center mt-2 text-sm text-green-600">
-                    <TrendingUp size={16} className="mr-1" />
-                    <span>+12% from last month</span>
-                  </div>
-                </div>
-                <div className="rounded-2xl p-4 bg-gradient-to-br from-blue-100 to-blue-200">
-                  <FolderGit2 className="h-8 w-8 text-blue-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">
-                    Questions Asked
-                  </p>
-                  <h3 className="text-3xl font-bold text-gray-800">48</h3>
-                  <div className="flex items-center mt-2 text-sm text-green-600">
-                    <TrendingUp size={16} className="mr-1" />
-                    <span>+8% from last week</span>
-                  </div>
-                </div>
-                <div className="rounded-2xl p-4 bg-gradient-to-br from-amber-100 to-amber-200">
-                  <MessageCircleQuestion className="h-8 w-8 text-amber-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">
-                    Meetings
-                  </p>
-                  <h3 className="text-3xl font-bold text-gray-800">3</h3>
-                  <div className="flex items-center mt-2 text-sm text-blue-600">
-                    <Calendar size={16} className="mr-1" />
-                    <span>2 upcoming</span>
-                  </div>
-                </div>
-                <div className="rounded-2xl p-4 bg-gradient-to-br from-indigo-100 to-indigo-200">
-                  <Presentation className="h-8 w-8 text-indigo-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">
-                    Activity Score
-                  </p>
-                  <h3 className="text-3xl font-bold text-gray-800">94</h3>
-                  <div className="flex items-center mt-2 text-sm text-green-600">
-                    <Star size={16} className="mr-1" />
-                    <span>Excellent</span>
-                  </div>
-                </div>
-                <div className="rounded-2xl p-4 bg-gradient-to-br from-green-100 to-green-200">
-                  <Activity className="h-8 w-8 text-green-600" />
-                </div>
-              </div>
-            </div>
           </div>
         </header>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <header className="mb-10">
+          <div className="flex items-center mb-2">
+            <FileCode
+              className="text-indigo-600 dark:text-indigo-400 mr-2"
+              size={24}
+            />
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
+              Repository Explorer
+            </h1>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400">
+            View commit history and query the codebase using natural language
+          </p>
+        </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main content - Projects */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold flex items-center text-gray-800">
-                <Code
-                  className="mr-3 text-blue-600"
-                  size={24}
-                />
-                Your Projects
-              </h2>
-              {user.repos.length > 0 && (
-                <button className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center px-4 py-2 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all duration-200">
-                  View all
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </button>
-              )}
+        {/* ChatBox Component */}
+        <div className="mb-12 transition-all duration-300 hover:shadow-xl rounded-2xl">
+          <ChatBox repoId={project.id} />
+        </div>
+      </div>
+
+      {/* Commits Section */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold flex items-center text-slate-800 dark:text-white">
+            <GitCommit
+              className="mr-2 text-indigo-600 dark:text-indigo-400"
+              size={20}
+            />
+            Commit History
+          </h2>
+          {commits && commits.length > 0 && (
+            <div className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+              {commits.length} commit{commits.length !== 1 ? "s" : ""}
             </div>
+          )}
+        </div>
 
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="animate-pulse bg-white/60 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 shadow-lg"
+        {commits && commits.length > 0 ? (
+          <div className="space-y-6">
+            {commits.map((commit) => (
+              <Commit commit={commit}/>
+            ))}
+
+            {/* Pagination */}
+            {totalPages >= 1 && (
+              <div className="flex justify-center mt-8">
+                <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-1">
+                  <Button
+                    onClick={() => navigateToPage(Math.max(1, pageNo - 1))}
+                    disabled={pageNo <= 1}
+                    className="p-2 rounded-md disabled:opacity-50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 disabled:hover:text-slate-500 disabled:dark:hover:text-slate-400"
                   >
-                    <div className="h-5 w-1/2 bg-gray-200 rounded mb-4"></div>
-                    <div className="h-4 w-3/4 bg-gray-200 rounded mb-3"></div>
-                    <div className="h-4 w-1/4 bg-gray-200 rounded"></div>
+                    <ChevronLeft size={18} />
+                  </Button>
+                  <div className="px-4 py-1 font-medium text-sm text-slate-700 dark:text-slate-300">
+                    Page {pageNo} of {totalPages}
                   </div>
-                ))}
-              </div>
-            ) : user.repos.length === 0 ? (
-              <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-3xl shadow-xl">
-                <div className="p-16 flex flex-col items-center justify-center text-center">
-                  <div className="relative mb-8">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-300 to-purple-300 rounded-full blur-xl opacity-30"></div>
-                    <div className="relative bg-gradient-to-r from-gray-100 to-gray-200 p-6 rounded-full">
-                      <FolderGit2
-                        size={48}
-                        className="text-gray-500"
-                      />
-                    </div>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-3">
-                    No projects yet
-                  </h3>
-                  <p className="text-gray-600 mb-8 max-w-md leading-relaxed">
-                    {`Connect your first GitHub repository to start exploring with RepoMind's intelligent assistance.`}
-                  </p>
-                  <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 flex items-center gap-3">
-                    <PlusCircle className="h-5 w-5" />
-                    Create New Project
-                  </button>
+                  <Button
+                    onClick={() =>
+                      navigateToPage(Math.min(totalPages, pageNo + 1))
+                    }
+                    disabled={pageNo >= totalPages}
+                    className="p-2 rounded-md disabled:opacity-50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 disabled:hover:text-slate-500 disabled:dark:hover:text-slate-400"
+                  >
+                    <ChevronRight size={18} />
+                  </Button>
                 </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {user.repos.map((repo, index) => (
-                  <div key={repo.id} className="group bg-white/80 backdrop-blur-lg border border-gray-200 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-blue-300 cursor-pointer">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">
-                          {repo.name}
-                        </h3>
-                        <p className="text-gray-500 text-sm">
-                          Last updated {Math.floor(Math.random() * 7) + 1} days ago
-                        </p>
-                      </div>
-                      <div className="rounded-xl p-3 bg-gradient-to-br from-blue-100 to-purple-100 group-hover:from-blue-200 group-hover:to-purple-200 transition-all duration-300">
-                        <GitBranch className="h-5 w-5 text-blue-600" />
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-6 text-sm mb-4">
-                      <div className="flex items-center text-gray-600">
-                        <Code className="h-4 w-4 mr-2" />
-                        <span>{Math.floor(Math.random() * 90) + 10} files</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <MessageCircleQuestion className="h-4 w-4 mr-2" />
-                        <span>{Math.floor(Math.random() * 30)} queries</span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                      <span className="text-xs text-gray-400">
-                        ID: {repo.id.substring(0, 8)}...
-                      </span>
-                      <div className="flex items-center text-blue-600 group-hover:text-blue-700 transition-colors">
-                        <span className="text-sm font-medium mr-2">Open</span>
-                        <ArrowRight className="h-4 w-4" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </div>
-
-          {/* Right sidebar - Quick Actions */}
-          <div className="lg:col-span-1">
-            <div className="space-y-8">
-              {/* Quick Actions */}
-              <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-3xl shadow-xl overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200 p-6">
-                  <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <Zap className="text-amber-500" size={24} />
-                    Quick Actions
-                  </h3>
-                </div>
-                <div className="divide-y divide-gray-100">
-                  <div className="group flex items-center gap-4 p-6 hover:bg-blue-50 transition-all duration-300 cursor-pointer">
-                    <div className="rounded-2xl p-3 bg-gradient-to-br from-amber-100 to-amber-200 group-hover:from-amber-200 group-hover:to-amber-300 transition-all duration-300">
-                      <MessageCircleQuestion className="h-6 w-6 text-amber-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
-                        Ask a Question
-                      </h4>
-                      <p className="text-sm text-gray-500">
-                        Query your codebase with AI
-                      </p>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                  </div>
-
-                  <div className="group flex items-center gap-4 p-6 hover:bg-blue-50 transition-all duration-300 cursor-pointer">
-                    <div className="rounded-2xl p-3 bg-gradient-to-br from-indigo-100 to-indigo-200 group-hover:from-indigo-200 group-hover:to-indigo-300 transition-all duration-300">
-                      <Presentation className="h-6 w-6 text-indigo-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
-                        Go to Meetings
-                      </h4>
-                      <p className="text-sm text-gray-500">
-                        View your scheduled code reviews
-                      </p>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                  </div>
-
-                  <div className="group flex items-center gap-4 p-6 hover:bg-blue-50 transition-all duration-300 cursor-pointer">
-                    <div className="rounded-2xl p-3 bg-gradient-to-br from-green-100 to-green-200 group-hover:from-green-200 group-hover:to-green-300 transition-all duration-300">
-                      <PlusCircle className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
-                        Create New Project
-                      </h4>
-                      <p className="text-sm text-gray-500">
-                        Connect a GitHub repository
-                      </p>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Recent Activity */}
-              <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-3xl shadow-xl">
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 border-b border-gray-200 p-6">
-                  <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <Activity className="text-green-500" size={24} />
-                    Recent Activity
-                  </h3>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-6">
-                    <div className="flex gap-4">
-                      <div className="rounded-xl p-2 bg-gradient-to-br from-blue-100 to-blue-200 h-min">
-                        <Clock className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-800 leading-relaxed">
-                          You asked a question about your{" "}
-                          <span className="font-semibold text-blue-600">API routes</span>
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          2 hours ago
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="rounded-xl p-2 bg-gradient-to-br from-indigo-100 to-indigo-200 h-min">
-                        <GitBranch className="h-5 w-5 text-indigo-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-800 leading-relaxed">
-                          New repository{" "}
-                          <span className="font-semibold text-indigo-600">connected</span>
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Yesterday
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="rounded-xl p-2 bg-gradient-to-br from-amber-100 to-amber-200 h-min">
-                        <Presentation className="h-5 w-5 text-amber-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-800 leading-relaxed">
-                          Code review meeting{" "}
-                          <span className="font-semibold text-amber-600">scheduled</span>
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          2 days ago
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="px-6 pb-6">
-                  <button className="w-full border-gray-300 bg-white/80 hover:bg-white/90 text-gray-700 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 px-4 py-3 border">
-                    View All Activity
-                  </button>
-                </div>
-              </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-800 shadow-md rounded-xl p-16 text-center border border-slate-200 dark:border-slate-700">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 mb-4">
+              <GitCommit size={32} />
             </div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+              No Commits Found
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+              There are no commits available for this repository yet.
+            </p>
           </div>
-        </div>
+        )}
+      </div>
+    </div>
       </div>
     </div>
   );

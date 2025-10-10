@@ -28,6 +28,7 @@ import { useUserStore } from "@/store/UserStore";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import Link from "next/link";
+import { useProjectStore } from "@/store/ProjectStore";
 
 const navigationItems = [
   {
@@ -38,7 +39,7 @@ const navigationItems = [
   },
   {
     title: "Query Engine",
-    url: "/ask-question",
+    url: "/query",
     icon: MessageCircleQuestion,
     description: "Ask questions about your repositories"
   },
@@ -57,25 +58,20 @@ const navigationItems = [
 ];
 
 function AppSidebar() {
-  const { isSignedIn, user: clerkUser } = useUser();
+  const { isSignedIn,isLoaded, user: clerkUser } = useUser();
   const user = useUserStore((state) => state);
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [activeProject, setActiveProject] = useState<string | null>(null);
-
+  const project=useProjectStore();
   useEffect(() => {
-    if (isSignedIn) {
+    if (isSignedIn && isLoaded) {
       user.getUser();
     }
-    
-    // Check if current path is a project path
-    if (pathname?.includes('/project/')) {
-      const projectId = pathname.split('/project/')[1]?.split('/')[0];
-      setActiveProject(projectId);
-    } else {
-      setActiveProject(null);
-    }
-  }, [isSignedIn, pathname]);
+  }, [isSignedIn, isLoaded]);
+
+  useEffect(()=>{
+    project.getProject();
+  },[]);
 
   return (
     <Sidebar className="bg-slate-50 dark:bg-slate-900 shadow-xl border-r border-slate-200 dark:border-slate-800 transition-all duration-300">
@@ -175,12 +171,17 @@ function AppSidebar() {
             <SidebarMenu>
               {user.repos.length > 0 ? (
                 user.repos.map((repo) => {
-                  const isActive = activeProject === repo.id;
+                  const isActive = project.id === repo.id;
                   return (
-                    <SidebarMenuItem key={repo.id} className="my-1">
+                    <SidebarMenuItem key={repo.id} className="my-1" onClick={()=> {
+                      project.updateProject({
+                        id:repo.id,
+                        name:repo.name,
+                      })
+                    }}>
                       <SidebarMenuButton asChild>
                         <Link
-                          href={`/project/${repo.id}`}
+                          href={`/dashboard`}
                           className={clsx(
                             "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
                             {

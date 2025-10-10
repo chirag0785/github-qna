@@ -16,6 +16,7 @@ export const resources = pgTable("resources", {
   content:varchar("content").notNull(),
   repo_name: varchar("repo_name", { length: 191 }).notNull(),
   file_path: varchar("file_path", { length: 191 }).notNull(),
+  summary: varchar("summary").notNull(),
   createdAt: timestamp("created_at")
     .notNull()
     .default(sql`now()`),

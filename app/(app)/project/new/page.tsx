@@ -21,12 +21,13 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useUserStore } from "@/store/UserStore";
+import { useProjectStore } from "@/store/ProjectStore";
 
 const Page = () => {
   const [uploadingRepo, setUploadingRepo] = useState(false);
   const user=useUserStore();
   const router = useRouter();
-
+  const project=useProjectStore();
   const form = useForm<z.infer<typeof repoAddSchema>>({
     resolver: zodResolver(repoAddSchema),
     defaultValues: {
@@ -55,7 +56,11 @@ const Page = () => {
         credits: user.credits - 50,
         repos: [...user.repos, {id:response.data.repoId,name:data.repoName,repo_url:data.repoUrl}]
       })
-      router.replace(`/project?repoId=${response.data.repoId}`);
+      project.updateProject({
+        id:response.data.repoId,
+        name: response.data.repoName,
+      })
+      router.replace('/dashboard');
     } catch (err: any) {
       console.error(err);
       toast.error("Error adding repository", {

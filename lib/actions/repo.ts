@@ -1,16 +1,23 @@
+'use server'
 import { GoogleGenAI } from "@google/genai";
 import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
-type Resource={
-    id:string;
-    repo_id:string;
-    content:string;
-    repo_name:string;
-    file_path:string;
-    createdAt:Date;
-    updatedAt:Date;
+import { createStreamableValue } from 'ai/rsc';
+import { db } from "../db";
+import { users } from "../db/schema/users";
+import { eq, sql } from "drizzle-orm";
+import { repos } from "../db/schema/repos";
+import { qsAnswers } from "../db/schema/questionAnswer";
+type Resource = {
+    id: string;
+    repo_id: string;
+    content: string;
+    repo_name: string;
+    file_path: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 const genAI = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || "",
+    apiKey: process.env.GEMINI_API_KEY || "",
 })
 export const cloneRepo = async (repoUrl: string, repoName: string, personalAccessToken?: string, branch?: string) => {
     try {
@@ -111,18 +118,20 @@ export const getFileDescriptionsAndQueryResults = async (files: Resource[], quer
     try {
         // Constructing the prompt to be sent to the AI model
         const prompt = `
-You are a highly intelligent file analysis system.
+You are a ai code assistant who answers questions about the codebase. Your target audience is a technical intern who is looking to understand the codebase better.
+
+AI assistant is a brand new, powerful, human like artificial intelligence. The traits of AI include expert knowledge, helpfulness, cleverness and articulateness.
+
+AI is a well behaved and well mannered individual who always answers the question in a friendly and professional manner.
+
+AI has sum of all knowledge in their brain  and is able to answer nearly any question about any topic in conversation.
+
+If the question is not relevant to the codebase, politely inform the user that you are unable to answer the question.
+
+If the question is about the code or a specific file, AI will provide a detailed and comprehensive answer, giving step by step instructions, including code snippets.
 
 Your task is to carefully read and analyze a set of source files and a user query. Each file is provided with its filename and full content inside triple backticks. The user query is also enclosed in backticks.
 
-Your goal is to provide a thoughtful, well-reasoned answer to the query using only the information found in the file contents. Your answer should:
-
-1. Start by directly answering the user's query in a clear and precise manner.
-2. Use insights strictly from the file contents. Do **not** make assumptions or rely on external knowledge.
-3. Refer to the files that are relevant to your answer. Briefly summarize what each file contains and how it helps address the query.
-4. Include specific code snippets (or parts of them) from the files that are directly relevant to answering the query. 
-5. If you use any code, explain clearly which parts you are referencing and why they are important.
-6. Ensure that your entire explanation is written in natural language that flows well, demonstrating a deep understanding of the content.
 
 ### Please return your answer **formatted as Markdown**:
 
@@ -130,17 +139,7 @@ Your goal is to provide a thoughtful, well-reasoned answer to the query using on
 - Ensure proper headings, indentation, and clarity for easy readability in a Markdown editor.
 - Be mindful of visual hierarchy and use appropriate Markdown formatting like **bold**, *italic*, and \`code\` where needed.
 
----
-
-**Query:**
-
-\`\`\`
-${query}
-\`\`\`
-
----
-
-**Files:**
+**Start of the Context**
 
 ${files.map(file => `
 ### Filename: \`${file.file_path}\`
@@ -149,22 +148,31 @@ ${files.map(file => `
 ${file.content.slice(0, 10000)}\`\`\`
 `).join('\n')}
 
+**End of the Context**
+
+**Start Question**
+
+\`\`\`
+${query}
+\`\`\`
+
+**End of Question**
 `;
 
         // Sending the prompt to the AI model for content generation
         const response = await genAI.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.0-flash',
             contents: prompt
         });
 
         // Processing and cleaning the response
         const responseText = (response?.text || "").replace(/```json|```/g, "").trim();
-        
+
         // Returning the formatted response
         return responseText;
     } catch (err) {
         console.error("Error in getFileDescriptionsAndQueryResults:", err);
-        
+
         // Throwing a more informative error message
         throw new Error(
             err instanceof Error && err.message.length > 0
@@ -173,3 +181,175 @@ ${file.content.slice(0, 10000)}\`\`\`
         );
     }
 };
+
+export const askQuestion = async (question: string, repoId: string, userId: string) => {
+    const userList = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (userList.length == 0) {
+        throw new Error("User not found");
+    }
+    const user = userList[0];
+    if (!user.credits || user.credits < 5) {
+        throw new Error("Not enough credits. Please purchase more credits to ask queries.");
+    }
+    if (!question) {
+        throw new Error("Query not provided");
+    }
+
+    try {
+        const matchedRepos = await db
+            .select()
+            .from(repos)
+            .where(eq(repos.id, repoId));
+        if (!matchedRepos || matchedRepos.length == 0) {
+            throw new Error("Repository not found");
+        }
+        const embeddingResponse = await genAI.models.embedContent({
+            model: "models/text-embedding-004",
+            contents: [question],
+            config: {
+                taskType: "RETRIEVAL_DOCUMENT",
+            },
+        });
+        if (
+            !embeddingResponse ||
+            !embeddingResponse.embeddings ||
+            embeddingResponse.embeddings.length == 0
+        ) {
+            throw new Error("Embedding not found");
+        }
+        const queryEmbedding = embeddingResponse?.embeddings[0].values;
+        if (!queryEmbedding) {
+            throw new Error("Query Embedding not found");
+        }
+
+        // Format the vector as a valid pgvector literal
+        const queryVector = `[${queryEmbedding.join(",")}]`;
+
+        // Use raw SQL to pass the vector as a literal
+        const results = await db.execute(
+            sql`
+            SELECT *,
+            1-("embedding" <=> ${queryVector}::vector) AS similarity
+            FROM "embeddings"
+            WHERE 1 - ("embedding" <=> ${queryVector}::vector) > .5
+            AND "resource_id" IN (
+              SELECT "id" FROM "resources" WHERE "repo_id" = ${repoId})
+            ORDER BY similarity DESC
+            LIMIT 10
+          `
+        );
+        const resourceIds = results.map((result) => result.resource_id);
+        console.log(resourceIds);
+        const resourceResults = await db.execute(
+            sql`SELECT * FROM "resources"
+                WHERE "id" = ANY(ARRAY[${sql.join(
+                resourceIds.map((id) => sql`${id}`),
+                sql`,`
+            )}]) 
+                AND "repo_id" = ${repoId}`
+        );
+
+        const referencedFiles = resourceResults.map((resource) => ({ name: resource.file_path as string, content: resource.content as string, summary: resource.summary as string }));
+        let context = '';
+        for (const doc of resourceResults) {
+            context += `source: ${doc.file_path}\ncode content: ${doc.content}\n summary of file: ${doc.summary}\n\n`
+        }
+
+
+        const stream = createStreamableValue();
+        (async () => {
+            const prompt = `
+You are a ai code assistant who answers questions about the codebase. Your target audience is a technical intern who is looking to understand the codebase better.
+AI assistant is a brand new, powerful, human like artificial intelligence. The traits of AI include expert knowledge, helpfulness, cleverness and articulateness.
+AI is a well behaved and well mannered individual who always answers the question in a friendly and professional manner.
+AI has sum of all knowledge in their brain  and is able to answer nearly any question about any topic in conversation.
+If the question is not relevant to the codebase, politely inform the user that you are unable to answer the question.
+If the question is about the code or a specific file, AI will provide a detailed and comprehensive answer, giving step by step instructions, including code snippets.
+START CONTEXT BLOCK
+${context}
+END OF CONTEXT BLOCK
+
+START QUESTION
+${question}
+END OF QUESTION
+AI assistant will take into account any CONTEXT BLOCK that is provided in a conversation.
+If the context does not provide the answer to the question, the AI assistant will say, "I'm sorry, but I don't know the answer"
+AI will not apologize for previous responses, but instead will indicated new information was gained
+AI assistant will not invent anything that is not drawn directly from the context.
+Answer in markdown syntax, with code snippets if need. Be as detailed as possible while answering the question.
+`;
+            try {
+                const response = await genAI.models.generateContentStream({
+                    model: 'gemini-2.0-flash',
+                    contents: prompt,
+                })
+
+                for await (const delta of response) {
+                    stream.update(delta.text);
+                }
+            } catch (err) {
+                stream.update("Error generating response");
+            } finally {
+                stream.done();
+            }
+        })()
+
+        await db.update(users).set({
+            credits: sql`users.credits-5`,
+        }).where(eq(users.id, userId));
+        return {
+            response: stream.value,
+            referencedFiles
+        }
+    } catch (err: any) {
+        console.error(err);
+        throw new Error(err.message);
+    }
+}
+
+export const saveQuestionAnswer = async (repoId: string, userId: string, profileImg: string, question: string, answer: string, filesReferenced: {
+    name: string,
+    content: string,
+    summary: string
+}[]) => {
+
+    try {
+        const repoResult = await db.select().from(repos).where(eq(repos.id, repoId));
+        if (!repoResult || repoResult.length == 0) {
+            throw new Error("Repo not found");
+        }
+
+        await db.insert(qsAnswers).values({
+            repo_id: repoId,
+            question,
+            answer,
+            filesReferenced,
+            user_id: userId,
+            profile_img: profileImg,
+        })
+        return {
+            message: "Answer saved successfully"
+        }
+    } catch (err: any) {
+        console.error(err);
+        throw new Error(err.message);
+    }
+}
+
+export const getQuestionAnswers = async (repoId: string) => {
+    try {
+        const repoResult = await db.select().from(repos).where(eq(repos.id, repoId));
+        if (!repoResult || repoResult.length == 0) {
+            throw new Error("Repo not found");
+        }
+
+        const qsResult = await db.select().from(qsAnswers).where(eq(qsAnswers.repo_id, repoId));
+        return {
+            data: qsResult,
+            message: "Answer saved successfully"
+        }
+    } catch (err: any) {
+        console.error(err);
+        throw new Error(err.message);
+    }
+}
