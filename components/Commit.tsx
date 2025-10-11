@@ -1,16 +1,8 @@
 import type { CommitType } from "@/lib/types";
 import { Clock } from "lucide-react";
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-};
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime)
 const Commit = ({ commit }: { commit: CommitType }) => {
   return (
     <div
@@ -44,7 +36,7 @@ const Commit = ({ commit }: { commit: CommitType }) => {
 
               <div className="flex items-center text-slate-500 dark:text-slate-400 text-sm">
                 <Clock size={14} className="mr-1" />
-                {formatDate(commit.committed_at)}
+                {dayjs(commit.committed_at).fromNow()}
               </div>
             </div>
           </div>

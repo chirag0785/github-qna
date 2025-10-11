@@ -67,11 +67,10 @@ function AppSidebar() {
     if (isSignedIn && isLoaded) {
       user.getUser();
     }
-  }, [isSignedIn, isLoaded,user]);
-
+  }, [isSignedIn, isLoaded]);
   useEffect(()=>{
     project.getProject();
-  },[project]);
+  },[]);
 
   return (
     <Sidebar className="bg-slate-50 dark:bg-slate-900 shadow-xl border-r border-slate-200 dark:border-slate-800 transition-all duration-300">

@@ -15,7 +15,6 @@ export const useProjectStore=create<ProjectStore>(
             getProject:()=>{
                 const projectId=localStorage.getItem('github-qna-project-id');
                 const projectName=localStorage.getItem('github-qna-project-name');
-                
                 set({
                     id:projectId || "",
                     name:projectName || ""

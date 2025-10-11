@@ -6,6 +6,7 @@ import { users } from "../db/schema/users";
 import { eq } from "drizzle-orm";
 import { repos } from "../db/schema/repos";
 import { Repo } from "@/store/UserStore";
+import { userRepos } from "../db/schema/userRepos";
 export const fetchUser=async ()=>{
     try{
         const {userId}=auth();
@@ -32,19 +33,11 @@ export const fetchUser=async ()=>{
             }   
         }
         const user=userDetails[0];
-        const repoDetails=[] as Repo[];
-        if(user.repos){
-            await Promise.all(user.repos.map(async (repoId)=>{
-                const repo=await db.select().from(repos).where(eq(repos.id,repoId));
-                if(repo.length>0){
-                    repoDetails.push({
-                        id:repo[0].id,
-                        name:repo[0].name,
-                        repo_url:repo[0].repo_url,
-                    });
-                }
-            }));
-        }
+        const repoDetails=await db.select({
+            id: repos.id,
+            name: repos.name,
+            repo_url: repos.repo_url,
+        }).from(userRepos).where(eq(userRepos.user_id,user.id)).innerJoin(repos,eq(userRepos.repo_id,repos.id));
         return {
             id:user.id,
             name:user.name,

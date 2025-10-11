@@ -23,6 +23,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import NotSigned from "@/components/NotSigned";
 import Loading from "@/components/Loading";
 import Commit from "@/components/Commit";
+import { useQuery } from "@tanstack/react-query";
+import { getTeamMembers } from "@/lib/actions/repo";
+import TeamMembers from "@/components/TeamMembers";
+import InviteTeamMember from "@/components/InviteTeamMember";
+
 const ProjectPageSkeleton = () => {
   return (
     <div className="mb-8">
@@ -93,6 +98,12 @@ const Page = () => {
   const router = useRouter();
   const pathname = usePathname();
 
+  const teamMembersQuery=useQuery({
+    queryKey: ['teamMembers',project.id],
+    queryFn: ()=> getTeamMembers(project.id),
+    enabled: !!project.id
+  })
+
   // Handle page navigation
   const navigateToPage = (page: number) => {
     const params = new URLSearchParams(searchParams);
@@ -116,7 +127,7 @@ const Page = () => {
               </strong>
             </div>
             <p className="text-sm">
-              🎉 You’ve been credited with <strong>100 free credits</strong> to
+              🎉 You've been credited with <strong>100 free credits</strong> to
               get started.
             </p>
             <p className="text-sm">
@@ -144,11 +155,12 @@ const Page = () => {
 
     // Simulate loading state
     setTimeout(() => setLoading(false), 500);
-  }, [isSignedIn, isLoaded, clerkUser,user]);
+  }, [isSignedIn, isLoaded, clerkUser]);
 
   useEffect(() => {
-    if (!user.id || !project.id || user.id.length==0 || project.id.length==0) return;
-
+    if (!user.id || !project.id || user.id.length==0 || project.id.length==0){
+      return;
+    }
     setLoading(true);
     getCommitDetails(pageNo, project.id, user.id)
       .then((response: any) => {
@@ -167,7 +179,7 @@ const Page = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [pageNo, project,user]);
+  }, [pageNo,project.id,user.id]);
 
   
   if (!isLoaded) {
@@ -214,7 +226,7 @@ const Page = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         {/* Welcome Header */}
         <header className="mb-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+          <div className="flex flex-col gap-6 mb-10">
             <div>
               <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-full px-6 py-3 mb-4 shadow-lg">
                 <Sparkles className="text-amber-500" size={20} />
@@ -224,7 +236,7 @@ const Page = () => {
                 Welcome back, {user.name} 
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed">
-                {`Here's what's happening with your repositories today.`}
+                {`Here's what's happening with your repository today.`}
               </p>
             </div>
           </div>
@@ -232,14 +244,20 @@ const Page = () => {
         <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
         <header className="mb-10">
-          <div className="flex items-center mb-2">
-            <FileCode
-              className="text-indigo-600 dark:text-indigo-400 mr-2"
-              size={24}
-            />
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
-              Repository Explorer
-            </h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <FileCode
+                className="text-indigo-600 dark:text-indigo-400 mr-2"
+                size={24}
+              />
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
+                Repository Explorer
+              </h1>
+            </div>
+            <div className="flex gap-x-1 items-center justify-between">
+              <InviteTeamMember projectId={project.id}/>
+              {teamMembersQuery?.data && <TeamMembers members={teamMembersQuery.data} maxVisible={3}/>}
+            </div>
           </div>
           <p className="text-slate-600 dark:text-slate-400">
             View commit history and query the codebase using natural language

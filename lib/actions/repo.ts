@@ -4,9 +4,10 @@ import { GithubRepoLoader } from "@langchain/community/document_loaders/web/gith
 import { createStreamableValue } from 'ai/rsc';
 import { db } from "../db";
 import { users } from "../db/schema/users";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { repos } from "../db/schema/repos";
 import { qsAnswers } from "../db/schema/questionAnswer";
+import { userRepos } from "../db/schema/userRepos";
 type Resource = {
     id: string;
     repo_id: string;
@@ -349,6 +350,39 @@ export const getQuestionAnswers = async (repoId: string) => {
             message: "Answer saved successfully"
         }
     } catch (err: any) {
+        console.error(err);
+        throw new Error(err.message);
+    }
+}
+
+export const getTeamMembers= async (repoId:string)=>{
+    try{
+        const result=await db.select({
+            id:users.id,
+            name: users.name,
+            profile_img: users.profile_img,
+        }).from(userRepos).where(eq(userRepos.repo_id,repoId)).innerJoin(users,eq(userRepos.user_id,users.id));
+
+        return result;
+    }catch(err:any){
+        console.error(err);
+        throw new Error(err.message);
+    }
+}
+
+export const addTeamMember= async (repoId:string,userId:string)=> {
+    try{
+        //check if already available
+        const result=await db.select().from(userRepos).where(and(eq(userRepos.repo_id,repoId),eq(userRepos.user_id,userId)));
+        if(result && result.length>0){
+            throw new Error("Repository already added");
+        }
+        await db.insert(userRepos).values({repo_id:repoId,user_id:userId});
+        return {
+            success:true,
+            message:"Team Member added success",
+        }
+    }catch(err:any){
         console.error(err);
         throw new Error(err.message);
     }

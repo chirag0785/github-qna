@@ -1,6 +1,6 @@
 import { nanoid } from "@/lib/utils";
 import { sql } from "drizzle-orm";
-import { integer, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const users=pgTable("users",{
     id: varchar("id", { length: 191 })
@@ -10,10 +10,6 @@ export const users=pgTable("users",{
     username:varchar("username",{length:191}).notNull(),
     email:varchar("email",{length:191}).notNull(),
     profile_img:varchar("profile_img"),
-    repos:text("repos")
-    .array()
-    .notNull()
-    .default(sql`'{}'::text[]`),
     credits: integer("credits").default(100),   //100 credits credited to start with for first time user
     createdAt: timestamp("created_at")
         .notNull()

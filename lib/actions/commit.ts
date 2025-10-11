@@ -53,17 +53,15 @@ export const pollCommits = async (repoId: string, userId: string) => {
             throw new Error("Repository not found");
         }
         const repoDetails = repo[0];
-        if (repoDetails.user_id !== userId) {
-            throw new Error("Unauthorized");
-        }
 
         const octokit = new Octokit({
             auth: repoDetails?.personal_access_token || process.env.GITHUB_ACCESS_TOKEN
         })
         const repoUrl = repoDetails.repo_url;
-        const owner = repoUrl.replace("https://github.com/", "").split("/")[0];
-        const repoName = repoUrl.replace("https://github.com/", "").split("/")[1];
-
+        const url = new URL(repoUrl);
+        const details = url.pathname.split('/').filter((val) => val.length > 0);
+        const owner = details[0];
+        const repoName = details[1].replace(/\.git$/, '');
         const commits = await octokit.rest.repos.listCommits({
             owner,
             repo: repoName,
@@ -163,7 +161,7 @@ export const pollCommits = async (repoId: string, userId: string) => {
 
 
         //update the embedding and resource table for these commits
-        await updateEmbeddingAndResourceTable(commitSummaries, repoId, repoName, repoDetails.user_id || userId);
+        await updateEmbeddingAndResourceTable(commitSummaries, repoId, repoName, userId);
         return {
             message: "Commits fetched successfully",
             success: true,
@@ -185,24 +183,13 @@ export const getCommitSummaries = async (commits: Commit[]) => {
             const response = await genAI.models.generateContent({
                 model: 'gemini-2.0-flash',
                 contents: `
-You are a senior code reviewer and summarization assistant.
-Given the following patches from a single Git commit, generate a concise, contextual markdown summary intended for junior engineers.  
-The summary should have exactly one bullet point per file changed.  
-Each bullet point should clearly explain:
-- What part of the file was changed (added, modified, removed).
-- How the change affects usage or functionality.
-- The intent behind the change.
-- The expected impact or benefit.
-Write in a style as if explaining the commit to a junior engineer so they understand the purpose and effect of each change.
-Do not include extra headings, JSON, or unrelated text.  
-Only produce a clean markdown list.
-Example format:
-\`\`\`markdown
-- file1.ext: Brief contextual explanation of what changed, how it is used now, intent, and impact.
-- file2.ext: Brief contextual explanation of what changed, how it is used now, intent, and impact.
-\`\`\`
-Patches:
-${commit.files.map(c => `--- PATCH for file: ${c.filename}\n\`\`\`diff\n${c.patch || ""}\n\`\`\``).join("\n\n")}`});
+                You are a senior software engineer. Based on the following patches of different files from a single Git commit.Each patch shows the changes made to a file, give a concise natural language summary (2-3 sentences or more based on explanation requirement) describing the overall changes made in the commit, so that junior engineer can understand the commit. Focus on what was modified, added, or removed, and the intent behind the changes if it can be inferred. Ignore formatting or minor syntax tweaks unless they significantly affect logic.
+                Only return the summary as plain text. Do not include any JSON, markdown, or extra explanation.
+                Patches:
+                ${commit.files.map(c => `--- PATCH for file: ${c.filename}\n\`\`\`diff\n${c.patch || ""}\n\`\`\``).join("\n\n")}
+                `
+            })
+
 
             const responseText = (response?.text || "").replace(/```json|```/g, "").trim();
             return {

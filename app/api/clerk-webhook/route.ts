@@ -118,7 +118,6 @@ export async function POST(req: Request) {
         name: user?.name,
         username: user?.username,
         profile_img: user?.profile_img,
-        repos: user?.repos || [],
       },
     });
   }
