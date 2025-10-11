@@ -88,7 +88,7 @@ const Page = () => {
   const { isSignedIn, isLoaded, user: clerkUser } = useUser();
   const [greeting, setGreeting] = useState("");
   const [loading, setLoading] = useState(true);
-  const project=useProjectStore();
+  const project = useProjectStore();
 
   const [commits, setCommits] = useState<CommitType[]>();
   const [error, setError] = useState<string>();
@@ -98,11 +98,11 @@ const Page = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const teamMembersQuery=useQuery({
-    queryKey: ['teamMembers',project.id],
-    queryFn: ()=> getTeamMembers(project.id),
-    enabled: !!project.id
-  })
+  const teamMembersQuery = useQuery({
+    queryKey: ["teamMembers", project.id],
+    queryFn: () => getTeamMembers(project.id),
+    enabled: !!project.id,
+  });
 
   // Handle page navigation
   const navigateToPage = (page: number) => {
@@ -127,8 +127,10 @@ const Page = () => {
               </strong>
             </div>
             <p className="text-sm">
-              🎉 You've been credited with <strong>100 free credits</strong> to
-              get started.
+              {`🎉 You've been credited with ${(
+                <strong>100 free credits</strong>
+              )} to
+              get started.`}
             </p>
             <p className="text-sm">
               🚀 Explore your repositories, ask questions about your code, and
@@ -158,7 +160,12 @@ const Page = () => {
   }, [isSignedIn, isLoaded, clerkUser]);
 
   useEffect(() => {
-    if (!user.id || !project.id || user.id.length==0 || project.id.length==0){
+    if (
+      !user.id ||
+      !project.id ||
+      user.id.length == 0 ||
+      project.id.length == 0
+    ) {
       return;
     }
     setLoading(true);
@@ -179,19 +186,18 @@ const Page = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [pageNo,project.id,user.id]);
+  }, [pageNo, project.id, user.id]);
 
-  
   if (!isLoaded) {
-    return <Loading/>
+    return <Loading />;
   }
 
   if (!isSignedIn) {
-    return <NotSigned/>
+    return <NotSigned />;
   }
-  if(!project.id || project.id.length==0){
+  if (!project.id || project.id.length == 0) {
     //select a project or create a new project to continue
-     return <NoProjectSelected/>
+    return <NoProjectSelected />;
   }
 
   if (loading) {
@@ -233,7 +239,7 @@ const Page = () => {
                 <span className="text-gray-700 font-medium">{greeting}!</span>
               </div>
               <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
-                Welcome back, {user.name} 
+                Welcome back, {user.name}
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed">
                 {`Here's what's happening with your repository today.`}
@@ -242,99 +248,105 @@ const Page = () => {
           </div>
         </header>
         <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <header className="mb-10">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center">
-              <FileCode
-                className="text-indigo-600 dark:text-indigo-400 mr-2"
-                size={24}
-              />
-              <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
-                Repository Explorer
-              </h1>
-            </div>
-            <div className="flex gap-x-1 items-center justify-between">
-              <InviteTeamMember projectId={project.id}/>
-              {teamMembersQuery?.data && <TeamMembers members={teamMembersQuery.data} maxVisible={3}/>}
+          <div className="mb-8">
+            <header className="mb-10">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <FileCode
+                    className="text-indigo-600 dark:text-indigo-400 mr-2"
+                    size={24}
+                  />
+                  <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
+                    Repository Explorer
+                  </h1>
+                </div>
+                <div className="flex gap-x-1 items-center justify-between">
+                  <InviteTeamMember projectId={project.id} />
+                  {teamMembersQuery?.data && (
+                    <TeamMembers
+                      members={teamMembersQuery.data}
+                      maxVisible={3}
+                    />
+                  )}
+                </div>
+              </div>
+              <p className="text-slate-600 dark:text-slate-400">
+                View commit history and query the codebase using natural
+                language
+              </p>
+            </header>
+
+            {/* ChatBox Component */}
+            <div className="mb-12 transition-all duration-300 hover:shadow-xl rounded-2xl">
+              <ChatBox repoId={project.id} />
             </div>
           </div>
-          <p className="text-slate-600 dark:text-slate-400">
-            View commit history and query the codebase using natural language
-          </p>
-        </header>
 
-        {/* ChatBox Component */}
-        <div className="mb-12 transition-all duration-300 hover:shadow-xl rounded-2xl">
-          <ChatBox repoId={project.id} />
-        </div>
-      </div>
-
-      {/* Commits Section */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold flex items-center text-slate-800 dark:text-white">
-            <GitCommit
-              className="mr-2 text-indigo-600 dark:text-indigo-400"
-              size={20}
-            />
-            Commit History
-          </h2>
-          {commits && commits.length > 0 && (
-            <div className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
-              {commits.length} commit{commits.length !== 1 ? "s" : ""}
-            </div>
-          )}
-        </div>
-
-        {commits && commits.length > 0 ? (
-          <div className="space-y-6">
-            {commits.map((commit) => (
-              <Commit key={commit.id} commit={commit}/>
-            ))}
-
-            {/* Pagination */}
-            {totalPages >= 1 && (
-              <div className="flex justify-center mt-8">
-                <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-1">
-                  <Button
-                    onClick={() => navigateToPage(Math.max(1, pageNo - 1))}
-                    disabled={pageNo <= 1}
-                    className="p-2 rounded-md disabled:opacity-50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 disabled:hover:text-slate-500 disabled:dark:hover:text-slate-400"
-                  >
-                    <ChevronLeft size={18} />
-                  </Button>
-                  <div className="px-4 py-1 font-medium text-sm text-slate-700 dark:text-slate-300">
-                    Page {pageNo} of {totalPages}
-                  </div>
-                  <Button
-                    onClick={() =>
-                      navigateToPage(Math.min(totalPages, pageNo + 1))
-                    }
-                    disabled={pageNo >= totalPages}
-                    className="p-2 rounded-md disabled:opacity-50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 disabled:hover:text-slate-500 disabled:dark:hover:text-slate-400"
-                  >
-                    <ChevronRight size={18} />
-                  </Button>
+          {/* Commits Section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold flex items-center text-slate-800 dark:text-white">
+                <GitCommit
+                  className="mr-2 text-indigo-600 dark:text-indigo-400"
+                  size={20}
+                />
+                Commit History
+              </h2>
+              {commits && commits.length > 0 && (
+                <div className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
+                  {commits.length} commit{commits.length !== 1 ? "s" : ""}
                 </div>
+              )}
+            </div>
+
+            {commits && commits.length > 0 ? (
+              <div className="space-y-6">
+                {commits.map((commit) => (
+                  <Commit key={commit.id} commit={commit} />
+                ))}
+
+                {/* Pagination */}
+                {totalPages >= 1 && (
+                  <div className="flex justify-center mt-8">
+                    <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-1">
+                      <Button
+                        onClick={() => navigateToPage(Math.max(1, pageNo - 1))}
+                        disabled={pageNo <= 1}
+                        className="p-2 rounded-md disabled:opacity-50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 disabled:hover:text-slate-500 disabled:dark:hover:text-slate-400"
+                      >
+                        <ChevronLeft size={18} />
+                      </Button>
+                      <div className="px-4 py-1 font-medium text-sm text-slate-700 dark:text-slate-300">
+                        Page {pageNo} of {totalPages}
+                      </div>
+                      <Button
+                        onClick={() =>
+                          navigateToPage(Math.min(totalPages, pageNo + 1))
+                        }
+                        disabled={pageNo >= totalPages}
+                        className="p-2 rounded-md disabled:opacity-50 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 disabled:hover:text-slate-500 disabled:dark:hover:text-slate-400"
+                      >
+                        <ChevronRight size={18} />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-slate-800 shadow-md rounded-xl p-16 text-center border border-slate-200 dark:border-slate-700">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 mb-4">
+                  <GitCommit size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+                  No Commits Found
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                  There are no commits available for this repository yet.
+                </p>
               </div>
             )}
           </div>
-        ) : (
-          <div className="bg-white dark:bg-slate-800 shadow-md rounded-xl p-16 text-center border border-slate-200 dark:border-slate-700">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 mb-4">
-              <GitCommit size={32} />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
-              No Commits Found
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-              There are no commits available for this repository yet.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+        </div>
       </div>
     </div>
   );
