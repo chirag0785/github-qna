@@ -12,7 +12,8 @@ This project uses semantic search and embeddings to deliver precise results.
 - **Semantic Search** — Uses vector embeddings to find the most relevant results.  
 - **Repository Integration** — Works directly with GitHub repositories.  
 - **Contextual Answers** — Combines embeddings with file contents to generate AI-powered answers.  
-- **Efficient Search** — Filters results by similarity score for relevance.
+- **Efficient Search** — Filters results by similarity score for relevance.  
+- **Team Collaboration** — Invite team members to your project and see who is part of your team.    
 
 ---
 
@@ -82,4 +83,8 @@ npm run dev
 
 3. **Answer Generation**  
    The system retrieves the relevant file contents and uses AI to generate a contextual answer to the query.
+
+4. ***Invite Team Members**
+   On inviting team members, we get a private link to the project, that can be shared to the team to join the project.
+
 
