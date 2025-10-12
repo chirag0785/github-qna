@@ -84,7 +84,7 @@ npm run dev
 3. **Answer Generation**  
    The system retrieves the relevant file contents and uses AI to generate a contextual answer to the query.
 
-4. ***Invite Team Members**
+4. **Invite Team Members**
    On inviting team members, we get a private link to the project, that can be shared to the team to join the project.
 
 
