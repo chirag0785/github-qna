@@ -75,16 +75,23 @@ npm run dev
 
 ## 🔍 How It Works
 
+GitHub QnA leverages AI and vector search to provide precise answers from your code repositories. Here's the workflow:
+
 1. **Embedding Generation**  
-   When a query is submitted, GitHub QnA uses Google GenAI's `text-embedding-004` model to convert the query into a numerical vector.
+   - When you submit a query, GitHub QnA uses Google GenAI's `text-embedding-004` model to convert your natural language query into a numerical vector.  
+   - This vector represents the semantic meaning of your query in a form the system can understand.
 
 2. **Vector Search**  
-   This vector is compared against stored embeddings in PostgreSQL (via `pgvector`) to find the most similar files.
+   - The generated query vector is compared against precomputed embeddings stored in PostgreSQL using `pgvector`.  
+   - The system identifies the most semantically similar files and code snippets from your repository based on similarity scores.
 
 3. **Answer Generation**  
-   The system retrieves the relevant file contents and uses AI to generate a contextual answer to the query.
+   - Relevant file contents are retrieved and passed to the AI model.  
+   - The AI generates a **contextual answer** to your query, often including **code snippets** and explanations to help you understand the solution.
 
-4. **Invite Team Members**
-   On inviting team members, we get a private link to the project, that can be shared to the team to join the project.
+4. **Invite Team Members**  
+   - You can generate a **private project link** to invite team members.  
+   - Team members can join using this link and collaborate on queries, access project resources, and view responses in real-time.
+
 
 
